@@ -1,11 +1,3 @@
-/**
- * AULA IoT - Embarcatech - Ricardo Prates - 004 - Webserver Raspberry Pi Pico w - wlan
- *
- * Material de suporte
- * 
- * https://www.raspberrypi.com/documentation/pico-sdk/networking.html#group_pico_cyw43_arch_1ga33cca1c95fc0d7512e7fef4a59fd7475 
- */
-
 #include <stdio.h>               // Biblioteca padrão para entrada e saída
 #include <string.h>              // Biblioteca manipular strings
 #include <stdlib.h>              // funções para realizar várias operações, incluindo alocação de memória dinâmica (malloc)
