@@ -116,11 +116,10 @@ static err_t tcp_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err);
 // Função de callback para processar requisições HTTP
 static err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err);
 
-// Leitura da temperatura interna
-float temp_read(void);
-
 // Tratamento do request do usuário
 void user_request(char **request);
+
+
 
 // Função principal
 int main()
@@ -181,10 +180,6 @@ int main()
     tcp_accept(server, tcp_server_accept);
     printf("Servidor ouvindo na porta 80\n");
 
-    // Inicializa o conversor ADC
-    adc_init();
-    adc_set_temp_sensor_enabled(true);
-
 
     // Configuração do PIO
     pio = pio0; 
@@ -229,6 +224,8 @@ int main()
     return 0;
 }
 
+
+
 // -------------------------------------- Funções ---------------------------------
 
 // Rotina para definição da intensidade de cores do led
@@ -263,8 +260,6 @@ void pwm_setup(uint pino) {
 
     pwm_set_enabled(slice, true);  // Habilita o slice PWM
 }
-
-
 
 // Função para iniciar o buzzer
 void iniciar_buzzer(uint pin) {
@@ -346,12 +341,8 @@ bool repeating_timer_callback(struct repeating_timer *timer) {
         parar_buzzer(BUZZER_A);
     }
 
-    printf("Temperatura: %d C, Umidade: %u %%\n", temp_atual, umid_atual); // Imprime os valores lidos
-    printf("Nível de temperatura: %s, Nível de umidade: %s\n", msg->nivel_temp, msg->nivel_umid); // Imprime os níveis
-
     return true;
 }
-
 
 // Função de callback ao aceitar conexões TCP
 static err_t tcp_server_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
@@ -368,6 +359,8 @@ void user_request(char **request){
         char *params = strstr(*request, "?") + 1; // Pega tudo após o '?'
         char tempMax[10], tempMin[10], umidMax[10], umidMin[10];
 
+        // Extrai os parâmetros da URL
+        // Exemplo: "tempMax=30&tempMin=20&umidMax=70&umidMin=30"
         sscanf(params, "tempMax=%[^&]&tempMin=%[^&]&umidMax=%[^&]&umidMin=%s", tempMax, tempMin, umidMax, umidMin);
 
         // Atualizar as variáveis globais
@@ -379,15 +372,6 @@ void user_request(char **request){
         printf("Configurações atualizadas: tempMax=%d, tempMin=%d, umidMax=%d, umidMin=%d\n", temp_max, temp_min, umid_max, umid_min);
     }
 };
-
-// Leitura da temperatura interna
-float temp_read(void){
-    adc_select_input(4);
-    uint16_t raw_value = adc_read();
-    const float conversion_factor = 3.3f / (1 << 12);
-    float temperature = 27.0f - ((raw_value * conversion_factor) - 0.706f) / 0.001721f;
-        return temperature;
-}
 
 // Função de callback para processar requisições HTTP
 static err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
@@ -425,7 +409,7 @@ static err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, er
             "</head>\n"
             "<body>\n"
             "<h1>Monitoramento IoT</h1>\n"
-            "<form id=\"configForm\" action=\"/update\" method=\"GET\">\n"
+            "<form action=\"/update\" method=\"GET\">\n"
             "<label for=\"tempMax\">Temperatura Máxima (°C):</label>\n"
             "<input type=\"number\" id=\"tempMax\" name=\"tempMax\" value=\"%d\"><br>\n"
             "<label for=\"tempMin\">Temperatura Mínima (°C):</label>\n"
@@ -439,7 +423,6 @@ static err_t tcp_server_recv(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, er
             "<h2>Leituras Atuais</h2>\n"
             "<p>Temperatura: <span id=\"currentTemp\">%s</span>(<span id=\"tempStatus\">%s</span>)</p>\n"
             "<p>Umidade: <span id=\"currentUmid\">%s</span>(<span id=\"umidStatus\">%s</span>)</p>\n"
-            "<button type=\"submit\" form=\"configForm\">Atualizar</button>\n"
             "</body>\n"
             "</html>\n",
              temp_max, temp_min, umid_max, umid_min, msg.string_temp_atual, msg.nivel_temp, msg.string_umid_atual, msg.nivel_umid);
